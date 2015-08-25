@@ -219,12 +219,14 @@ class EnemyShip(BaseShip):
             return True
     def reverse(self):
         self.x_speed = self.x_speed * -1
+
+    # todo: are these bound guys ever called?
     def outOfRightBound(self, bound):
         if self.pos_x > bound.pos_x:
-            return true
+            return True
     def outOfLeftBound(self, bound):
         if self.pos_x < bound.pos_x:
-            return true
+            return True
     def moveDown(self):
         self.pos_y += self.size_y
 
