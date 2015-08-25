@@ -21,12 +21,16 @@ class BaseShip:
         return self.pos_y
     def getRect(self):
         return [self.pos_x, self.pos_y, self.size_x, self.size_y]
-       
+    
 
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+
+BLOCK_SIZE = 15
 
 
 pygame.init()
@@ -43,22 +47,152 @@ done = False
 
 clock = pygame.time.Clock()
 
+class GameManager:
+    def __init__(self):
+        self.score = 0
+        self.font = pygame.font.SysFont("monospace", 15)
+        self.font.set_bold(True)
+        self.win = False
+        self.lives = 3
+        self.lose = False
+        self.done = False
+        self.bonusShip = None
+
+    def Update(self, bullet, ship):
+        # handle the bonus ship
+        if self.bonusShip:
+            self.bonusShip.Update(bullet, ship)
+
+        #reset font
+        self.font = pygame.font.SysFont("monospace", 15)
+        self.font.set_bold(True)
+
+        # write the score and lives left on the top
+        label = self.font.render("Game Score: " + str(self.score), 1, GREEN)
+        screen.blit(label, (10,10))
+        label = self.font.render("Lives Left: " + str(self.lives), 1, GREEN)
+        screen.blit(label, (width - label.get_rect().width - 10, 10))
+
+        # if all the ships are dead (21) then print the win text
+        if self.win:
+            self.font = pygame.font.SysFont("monospace", 75)
+            self.font.set_bold(True)
+            label = self.font.render("YOU WIN!", 1, GREEN)
+            screen.blit(label, (width/2 - label.get_rect().width/2, height/2 - label.get_rect().height/2))
+        if self.lose:
+            self.font = pygame.font.SysFont("monospace", 75)
+            self.font.set_bold(True)
+            label = self.font.render("YOU LOSE!", 1, GREEN)
+            screen.blit(label, (width/2 - label.get_rect().width/2, height/2 - label.get_rect().height/2))
+
+
+    def increaseScore(self):
+        self.score += 1
+        if self.score == 21:
+            self.win = True
+
+    def loseLife(self):
+        if self.lives > 0:
+            self.lives -= 1
+        else:
+            self.lose = True
+            self.haltShips()
+        return self.lose
+
+    def haltShips(self):
+        self.done = True
+    def isDone(self):
+        return self.done
+    def shipLanded(self):
+        self.lose = True
+        self.haltShips()
+    def makeBonusShip(self):
+        self.bonusShip = BonusEnemyShip(self)
+
+
+class BonusEnemyShip(BaseShip):
+    def __init__(self, gameManager):
+        self.size_x = 25
+        self.size_y = 25
+        self.gameManager = gameManager
+        self.x_speed = 7
+        self.alive = True
+        self.pos_x = 0
+        self.pos_y = 50
+        self.bullet = None
+
+    def isShot(self, bullet):
+        rect = pygame.Rect(self.pos_x, self.pos_y, self.size_x, self.size_y)
+        if rect.colliderect(bullet.getRect()):
+            print ("HIT")
+            self.alive = False
+            bullet.reset()
+            return True
+
+    def shoot(self):
+        # random number things
+        if self.pos_x > 255 and not self.bullet:
+            self.bullet = EnemyBullet(self.gameManager)
+
+            self.bullet.shoot(self)
+
+
+
+    def Update(self, Bullet, ship):
+        self.shoot()
+        if self.gameManager.isDone():
+            self.x_speed = 0
+        if self.isShot(bullet):
+            print(self.x_speed)
+            self.isAlive = False
+            self.gameManager.increaseScore() # more than one later
+
+        self.pos_x += self.x_speed
+
+        if self.pos_x > width:
+            self.alive = False
+
+        if self.alive:
+            pygame.draw.rect(screen, RED, [self.pos_x, self.pos_y, self.size_x, self.size_y])
+
+        if self.bullet:
+            self.bullet.Update(ship)
+
+
+
+
+
 
 class EnemyShip(BaseShip):
-    def __init__(self):
+    def __init__(self, gameManager):
         self.size_x = 25
         self.size_y = 25
         self.pos_x = width/2
         self.pos_y = 0
         self.x_speed = 1
         self.alive = True
+        self.gameManager = gameManager
 
     def __str__(self):
-        return ("ship is at: " + str(self.pos_x) + ", " + str(self.pos_y))
+        return "ship is at: " + str(self.pos_x) + ", " + str(self.pos_y)
+
+    # going right, increase speed value
+    # going left, decrease speed value (still increases ship speed)
+    def increaseSpeed(self):
+        if self.x_speed > 0:
+            self.x_speed += .25
+        else:
+            self.x_speed -= .25
 
     def Update(self, bullet):
+        if self.gameManager.isDone():
+            self.x_speed = 0
+
+
         if self.isShot(bullet):
+            print(self.x_speed)
             return True
+
 
         if self.pos_x < 0:
             self.x_speed = self.x_speed * -1
@@ -70,10 +204,11 @@ class EnemyShip(BaseShip):
         self.pos_x += self.x_speed
 
         if self.alive:
-            pygame.draw.rect(screen, WHITE, [self.pos_x, self.pos_y, self.size_x , self.size_y])
-        else:
-            pygame.draw.rect(screen, GREEN, [self.pos_x, self.pos_y, self.size_x , self.size_y])
-        
+            pygame.draw.rect(screen, RED, [self.pos_x, self.pos_y, self.size_x, self.size_y])
+
+        self.landedOnGround()
+        #else:
+        #    pygame.draw.rect(screen, GREEN, [self.pos_x, self.pos_y, self.size_x, self.size_y])
 
     def isShot(self, bullet):
         rect = pygame.Rect(self.pos_x, self.pos_y, self.size_x, self.size_y)
@@ -93,17 +228,26 @@ class EnemyShip(BaseShip):
     def moveDown(self):
         self.pos_y += self.size_y
 
+    # win condition for the enemy
+    def landedOnGround(self):
+        if self.pos_y > height - 95:
+            print("landed")
+            gameManager.shipLanded()
+
 
 class Fleet:
     # add ship columns in order to find the ship that shoots, might be more efficient than a list of the lowest
-    def __init__(self, ship):
+    def __init__(self, ship, gameManager):
+        self.gameManager = gameManager
         self.shipList = []
         self.shipColumns = []
+        # shipStart is the y coordinate of where the ships spawn
+        self.shipStart = 30
         self.shipCount = 7
         self.rowCount = 3
-        #self.shipSpeed = 5
+
         self.pos_x = 50
-        self.pos_y = 0
+        self.pos_y = self.shipStart
         self.left_bound = None
         self.right_bound = None
         self.max_right = width - 50
@@ -116,20 +260,23 @@ class Fleet:
 
         self.bulletList = []
         self.heroShip = ship
+
+        
+        self.steps = 0
         
         # across
         for i in range (0, self.shipCount):
             tempList = []
             # down
             for j in range(0, self.rowCount):
-                e = EnemyShip()
+                e = EnemyShip(self.gameManager)
                 e.pos_x = self.pos_x
                 e.pos_y = self.pos_y
                 self.pos_y += 50
                 self.shipList.append(e)
                 tempList.append(e)
             self.shipColumns.append(tempList)
-            self.pos_y = 0
+            self.pos_y = self.shipStart
             self.pos_x += 50
 
         self.shipList = sorted(self.shipList, key = lambda ship: ship.pos_x)
@@ -178,6 +325,7 @@ class Fleet:
     def stepDown(self):
         for ship in self.shipList:
             ship.moveDown()
+        self.steps += 1
 
     def reverseFleet(self):
         for ship in self.shipList:
@@ -185,13 +333,12 @@ class Fleet:
 
 
     def shoot(self):
-
         #for ship in self.lowestShips:
         if (self.timer > self.intervalBetweenShots):
             if (self.lowestShips):
                 ship = random.choice(self.lowestShips)
                 print(ship)
-                b = EnemyBullet()
+                b = EnemyBullet(self.gameManager)
                 b.shoot(ship)
 
                 self.bulletList.append(b)
@@ -208,54 +355,70 @@ class Fleet:
                     break
         self.recentlyKilled = None
 
+        #increase the speed of all the ships
+        self.increaseFleetSpeed()
+
+    def increaseFleetSpeed(self):
+        for ship in self.shipList:
+            ship.increaseSpeed()
+
 
     def Update(self, bullet):
-        # update timer
-        self.timer += 1
-        # update each ship
-        for ship in self.shipList:
-            # if the ship is dead
-            if ship.Update(bullet):
-                # set it to be removed after all the ships have moved
-                self.recentlyKilled = ship
-        self.shoot()
-        self.animateBullets()
-                
-        # if there was a ship that died then take it out of the list
-        if (self.recentlyKilled):
-            self.dead()
+        if not self.gameManager.isDone():
+            # update timer
+            self.timer += 1
+            # update each ship
+            for ship in self.shipList:
+                # if the ship is dead
+                if ship.Update(bullet):
+                    # set it to be removed after all the ships have moved
+                    self.recentlyKilled = ship
+            self.shoot()
+            self.animateBullets()
+                    
+            # if there was a ship that died then take it out of the list
+            # update the score
+            if (self.recentlyKilled):
+                self.dead()
+                self.gameManager.increaseScore()
 
 
-        # if the far left or the far right die then reset bounds
-        if (not self.left_bound.isAlive()) or (not self.right_bound.isAlive()):
-            self.setBounds()
+            # if the far left or the far right die then reset bounds
+            if (not self.left_bound.isAlive()) or (not self.right_bound.isAlive()):
+                self.setBounds()
 
-        # if the right most ship or the left most ship is too far reverse it
-        if self.right_bound.pos_x > self.max_right or self.left_bound.pos_x < self.max_left:
-            self.reverseFleet()
-            # step the fleet down
-            self.stepDown()
- 
-        
+            # if the right most ship or the left most ship is too far reverse it
+            if self.right_bound.pos_x > self.max_right or self.left_bound.pos_x < self.max_left or self.right_bound.pos_x < self.max_left or self.left_bound.pos_x > self.max_right:
+                self.reverseFleet()
+                # step the fleet down
+                self.stepDown()
 
-        # shoot at you
+            #spawn bonus ship if ready
+            if self.steps == 2:
+                self.gameManager.makeBonusShip()
+                self.steps = 0
 
+        else:
+            self.animateBullets()
+            for ship in self.shipList:
+                # if the ship is dead
+                ship.Update(bullet)
 
-
-
-
+    def getBullets(self):
+        return self.bulletList
 
 class HeroShip(BaseShip):
-    def __init__(self):
+    def __init__(self, gameManager):
         self.size_x = 50
         self.size_y = 50
         self.pos_x = width/2
         self.pos_y = height - self.size_y - 10
         self.x_speed = 0
         self.alive = True
+        self.gameManager = gameManager
 
     def shot(self):
-        self.alive = False
+        self.die()
     def goLeft(self):
         self.x_speed = -3
 
@@ -274,17 +437,33 @@ class HeroShip(BaseShip):
             self.pos_x = width - self.size_x
         self.pos_x += self.x_speed
         if (self.isAlive()):
-            pygame.draw.rect(screen, WHITE, [self.pos_x, self.pos_y, self.size_x , self.size_y])
+            pygame.draw.rect(screen, BLUE, [self.pos_x, self.pos_y, self.size_x , self.size_y])
+        if gameManager.isDone():
+            self.alive = False
+        
+
+
+    def die(self):
+        # if loseLife returns true, we are out of lives
+        if self.gameManager.loseLife():
+            self.alive = False
+
+
+
+
+
+
 
 class Bullet:
-    def __init__(self):
+    def __init__(self, gameManager):
         self.pos_x = -10
         self.pos_y = 0
         self.size_x = 4
         self.size_y = 9
-        self.speed = -20
+        self.speed = -15
         self.ReadyToShoot = True
         self.Shooting = False
+        self.gameManager = gameManager
 
     def reset(self):
         self.Shooting = False
@@ -295,6 +474,8 @@ class Bullet:
         if (self.ReadyToShoot):
             return True
     def Update(self):
+        if self.gameManager.isDone():
+            self.speed = 0
         if (self.Shooting):
             self.pos_y += self.speed
             Bullet = [self.pos_x, self.pos_y, self.size_x, self.size_y]
@@ -317,7 +498,7 @@ class Bullet:
         self.Shooting = True
 
 class EnemyBullet(Bullet):
-    def __init__(self):
+    def __init__(self, gameManager):
         self.pos_x = -10
         self.pos_y = 0
         self.size_x = 4
@@ -326,8 +507,18 @@ class EnemyBullet(Bullet):
         self.ReadyToShoot = True
         self.Shooting = False
         self.done = False
+        self.gameManager = gameManager
+    def reset(self):
+        self.Shooting = False
+        self.ReadyToShoot = True
+        self.pos_x = -10
+        self.pos_y = 0
+        self.done = True
+
     def Update(self, hero):
-        if (self.Shooting):
+        if self.gameManager.isDone():
+            self.speed = 0
+        if self.Shooting:
             self.pos_y += self.speed
             Bullet = [self.pos_x, self.pos_y, self.size_x, self.size_y]
             pygame.draw.rect(screen, WHITE, Bullet)
@@ -343,10 +534,97 @@ class EnemyBullet(Bullet):
             self.done = True
         return self.done
 
-bullet = Bullet()
-ship = HeroShip()
+# maybe for later, to keep track of all projectiles
+'''
+class BulletManager:
+    def __init__(self):
+'''
+
+# TODO: drop bullet speeds and up frame rate to get proper collision
+class Block:
+    def __init__(self, x, y, gameManager):
+        self.size_x = BLOCK_SIZE
+        self.size_y = BLOCK_SIZE
+        self.dead = False
+        self.pos_x = x
+        self.pos_y = y
+        self.gameManager = gameManager
+
+    """ update function, called every frame.
+    takes the hero bullet and the entire fleet so the bullets can be retrieved
+    """
+    def Update(self, heroBullet, EnemyBullets):
+        
+        blockSize = [self.pos_x, self.pos_y, self.size_x, self.size_y]
+        pygame.draw.rect(screen, GREEN, blockSize)
+
+        rect = pygame.Rect(self.pos_x, self.pos_y, self.size_x, self.size_y)
+        
+
+        for bullet in EnemyBullets:
+            if rect.colliderect(bullet.getRect()):
+                print("shot by enemy")
+                self.dead = True
+                bullet.reset()
+
+        if rect.colliderect(heroBullet.getRect()):
+            print("we shot it!")
+            self.dead = True
+            heroBullet.reset()
+
+        #make the outer ifs into a function in gamemanager
+        if gameManager.bonusShip:
+            if gameManager.bonusShip.bullet:
+                if rect.colliderect(gameManager.bonusShip.bullet.getRect()):
+                    self.dead = True
+                    gameManager.bonusShip.bullet.reset()
+
+                
+        return self.dead
+
+class Barrier(Block):
+    def __init__(self, x, gameManager):
+        self.pos_x = x
+        self.pos_y = height - 125
+        self.blockList = []
+        self.recentlyKilled = None
+        self.size_x = BLOCK_SIZE
+        self.size_y = BLOCK_SIZE
+        self.offset_x = 0
+        self.offset_y = 0
+        self.gameManager = gameManager
+        for i in range(12):
+            i += 1
+            if i != 6 and i != 7 and i != 10 and i != 11:
+                self.blockList.append(Block(self.pos_x + self.offset_x, self.pos_y + self.offset_y, self.gameManager))
+            self.offset_x += self.size_x
+            if i % 4 == 0:
+                self.offset_y += self.size_y
+                self.offset_x = 0
+
+    def Update(self, heroBullet, EnemyBullets):
+        for block in self.blockList:
+            if block.Update(heroBullet, EnemyBullets):
+                self.recentlyKilled = block
+
+        if self.recentlyKilled:
+            self.blockList.remove(self.recentlyKilled)
+            self.recentlyKilled = None
+
+
+
+
+gameManager = GameManager()
+bullet = Bullet(gameManager)
+ship = HeroShip(gameManager)
 #enemy = EnemyShip()
-enemyFleet = Fleet(ship)
+enemyFleet = Fleet(ship, gameManager)
+barrier1 = Barrier(75, gameManager)
+barrier2 = Barrier(225, gameManager)
+barrier3 = Barrier(375, gameManager)
+barrier4 = Barrier(525, gameManager)
+
+
 
 #BulletShot = False
 #ReadyToShoot = True
@@ -366,7 +644,7 @@ while not done:
             if event.key == pygame.K_RIGHT:
                 ship.goRight()
             if event.key == pygame.K_SPACE:
-                if (bullet.isReady()):
+                if (bullet.isReady() and ship.isAlive()):
                     bullet.shoot(ship)
 
      
@@ -380,10 +658,16 @@ while not done:
             
 
     screen.fill(BLACK)
-
+    barrier1.Update(bullet, enemyFleet.getBullets())
+    barrier2.Update(bullet, enemyFleet.getBullets())
+    barrier3.Update(bullet, enemyFleet.getBullets())
+    barrier4.Update(bullet, enemyFleet.getBullets())
     bullet.Update()
     ship.Update()
+    
     enemyFleet.Update(bullet)
+    gameManager.Update(bullet, ship)
+    #block.Update(bullet, enemyFleet.getBullets())
 
     pygame.display.flip()
     clock.tick(60)
