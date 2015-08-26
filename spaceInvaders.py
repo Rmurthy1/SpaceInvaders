@@ -50,7 +50,7 @@ done = False
 
 clock = pygame.time.Clock()
 
-
+#BulletManager creates bullet and gives it to the enemyship and the heroship
 class BulletManager:
     def __init__(self):
         self.bulletCollection = []
@@ -135,10 +135,7 @@ class GameManager:
         if self.bonusShip:
             self.bonusShip.Update(bullet, ship)
 
-        
-
-
-
+    
 
     def haltShips(self):
         self.done = True
@@ -174,7 +171,6 @@ class BonusEnemyShip(BaseShip):
         # random number things
         if self.pos_x > 255 and not self.bullet:
             self.bullet = EnemyBullet(self.gameManager)
-
             self.bullet.shoot(self)
 
 
@@ -623,7 +619,8 @@ class Block:
 
                 
         return self.dead
-
+""" Barrier inheritates the Block class and builds a barrier out of it
+"""
 class Barrier(Block):
     def __init__(self, x, gameManager):
         self.pos_x = x
@@ -635,6 +632,7 @@ class Barrier(Block):
         self.offset_x = 0
         self.offset_y = 0
         self.gameManager = gameManager
+        #to make the shape of upside down U from blocks
         for i in range(12):
             i += 1
             if i != 6 and i != 7 and i != 10 and i != 11:
