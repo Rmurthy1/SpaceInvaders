@@ -47,6 +47,14 @@ done = False
 
 clock = pygame.time.Clock()
 
+class TextManager:
+    def __init__(self):
+        self.font = pygame.font.SysFont("monospace", 15)
+        self.win = False
+        self.lose = False
+
+    def Update()
+
 class GameManager:
     def __init__(self):
         self.score = 0
