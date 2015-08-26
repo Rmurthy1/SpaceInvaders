@@ -50,6 +50,22 @@ done = False
 
 clock = pygame.time.Clock()
 
+""" All ships and Bullets and Barriers must return True or False in their update, True if dead.
+"""
+
+class shipManager:
+    def __init__(self):
+        self.AllShips = []
+        self.EnemyShips = []
+        self.bonusShip = None
+
+    def Update():
+        for ship in self.AllShips:
+            if (ship.Update())
+
+
+
+
 
 class BulletManager:
     def __init__(self):
@@ -57,13 +73,17 @@ class BulletManager:
         self.recentlyKilled = None
 
 
-    def Update:
+    def Update():
         for bullet in self.bulletCollection:
             # if the bullet's life ends then it has to be removed later
             if (bullet.Update()):
                 self.recentlyKilled = bullet
         self.bulletCollection.remove(self.recentlyKilled)
-        
+    
+    # sent to the bullets when the game is over
+    def HaltBullets():
+        for bullet in self.bulletCollection:
+            #bullet.halt()
 
 """ The TextManager class handles the text that will be displayed on the screen
 """
@@ -134,6 +154,7 @@ class GameManager:
         # handle the bonus ship
         if self.bonusShip:
             self.bonusShip.Update(bullet, ship)
+
 
         
 
