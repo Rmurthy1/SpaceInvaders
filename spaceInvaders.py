@@ -50,6 +50,20 @@ done = False
 
 clock = pygame.time.Clock()
 
+
+class shipManager:
+    def __init__(self):
+        self.AllShips = []
+        self.EnemyShips = []
+        self.bonusShip = None
+
+    def Update():
+        for ship in self.AllShips:
+            if (ship.Update())
+
+
+
+
 #BulletManager creates bullet and gives it to the enemyship and the heroship
 class BulletManager:
     def __init__(self):
@@ -57,23 +71,31 @@ class BulletManager:
         self.recentlyKilled = None
 
 
-    def Update:
+    def Update():
         for bullet in self.bulletCollection:
             # if the bullet's life ends then it has to be removed later
             if (bullet.Update()):
                 self.recentlyKilled = bullet
         self.bulletCollection.remove(self.recentlyKilled)
+    
+    # sent to the bullets when the game is over
+    def HaltBullets():
+        for bullet in self.bulletCollection:
+            #bullet.halt()
         
 
 """ The TextManager class handles the text that will be displayed on the screen
 """
 class TextManager:
-    def __init__(self):
+    def __init__(self, bulletManager, textManager, shipManager):
         self.font = pygame.font.SysFont("monospace", 15)
         self.win = False
         self.lose = False
         self.score = 0
         self.lives = 3
+        self.bulletManager = bulletManager
+        self.textManager = textManager
+        self.shipManager = shipManager
 
     def wonTheGame():
         self.win = True
