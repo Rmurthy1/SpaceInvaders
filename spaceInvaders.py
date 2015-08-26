@@ -48,30 +48,51 @@ done = False
 
 clock = pygame.time.Clock()
 
+
+class BulletManager:
+    def __init__(self):
+        self.bulletCollection = []
+        self.recentlyKilled = None
+
+
+    def Update:
+        for bullet in self.bulletCollection:
+            # if the bullet's life ends then it has to be removed later
+            if (bullet.Update()):
+                self.recentlyKilled = bullet
+        self.bulletCollection.remove(self.recentlyKilled)
+        
+
+""" The TextManager class handles the text that will be displayed on the screen
+"""
 class TextManager:
     def __init__(self):
         self.font = pygame.font.SysFont("monospace", 15)
         self.win = False
         self.lose = False
-
-    def Update()
-
-class GameManager:
-    def __init__(self):
         self.score = 0
-        self.font = pygame.font.SysFont("monospace", 15)
-        self.font.set_bold(True)
-        self.win = False
         self.lives = 3
-        self.lose = False
-        self.done = False
-        self.bonusShip = None
 
-    def Update(self, bullet, ship):
-        # handle the bonus ship
-        if self.bonusShip:
-            self.bonusShip.Update(bullet, ship)
+    def wonTheGame():
+        self.win = True
 
+    def LostTheGame():
+        self.lose = True
+
+    def increaseScore(self):
+        self.score += 1
+        if self.score == 21:
+            self.win = True
+
+    def loseLife(self):
+        if self.lives > 0:
+            self.lives -= 1
+        else:
+            self.lose = True
+            self.haltShips()
+        return self.lose
+
+    def Update():
         #reset font
         self.font = pygame.font.SysFont("monospace", 15)
         self.font.set_bold(True)
@@ -95,18 +116,27 @@ class GameManager:
             screen.blit(label, (width/2 - label.get_rect().width/2, height/2 - label.get_rect().height/2))
 
 
-    def increaseScore(self):
-        self.score += 1
-        if self.score == 21:
-            self.win = True
 
-    def loseLife(self):
-        if self.lives > 0:
-            self.lives -= 1
-        else:
-            self.lose = True
-            self.haltShips()
-        return self.lose
+class GameManager:
+    def __init__(self):
+        self.score = 0
+        self.font = pygame.font.SysFont("monospace", 15)
+        self.font.set_bold(True)
+        self.win = False
+        self.lives = 3
+        self.lose = False
+        self.done = False
+        self.bonusShip = None
+
+    def Update(self, bullet, ship):
+        # handle the bonus ship
+        if self.bonusShip:
+            self.bonusShip.Update(bullet, ship)
+
+        
+
+
+
 
     def haltShips(self):
         self.done = True
