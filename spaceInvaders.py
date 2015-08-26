@@ -1,7 +1,7 @@
 import pygame
 import random
 
-#test
+#testhj
 
 """ BaseShip is the primary ship class which returns
 the position of each ship and their midpoints.
