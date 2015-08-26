@@ -195,6 +195,32 @@ class EnemyShip(BaseShip):
         else:
             self.x_speed -= .25
 
+    def isShot(self, bullet):
+        rect = pygame.Rect(self.pos_x, self.pos_y, self.size_x, self.size_y)
+        if rect.colliderect(bullet.getRect()):
+            print ("HIT")
+            self.alive = False
+            bullet.reset()
+            return True
+    def reverse(self):
+        self.x_speed = self.x_speed * -1
+
+    # todo: are these bound guys ever called?
+    def outOfRightBound(self, bound):
+        if self.pos_x > bound.pos_x:
+            return True
+    def outOfLeftBound(self, bound):
+        if self.pos_x < bound.pos_x:
+            return True
+    def moveDown(self):
+        self.pos_y += self.size_y
+
+    # win condition for the enemy
+    def landedOnGround(self):
+        if self.pos_y > height - 95:
+            print("landed")
+            gameManager.shipLanded()
+
     def Update(self, bullet):
         if self.gameManager.isDone():
             self.x_speed = 0
