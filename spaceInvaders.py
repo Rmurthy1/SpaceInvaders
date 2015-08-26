@@ -2,6 +2,10 @@ import pygame
 import random
 
 #test
+
+""" BaseShip is the primary ship class which returns
+the position of each ship and their midpoints.
+"""
 class BaseShip:
     def __init__(self):
         self.speed = 3
@@ -14,10 +18,8 @@ class BaseShip:
         return self.alive
     def getPosX(self):
         return self.pos_x
-
     def getMidPoint(self):
         return self.size_x/2
-
     def getPosY(self):
         return self.pos_y
     def getRect(self):
@@ -31,14 +33,14 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
+#block size is the size of each block for the barriers
 BLOCK_SIZE = 15
 
 
 pygame.init()
-
+# the width and height of the gamescreen
 width = 700
 height = 500
-
 size = (width, height)
 screen = pygame.display.set_mode(size)
 
@@ -249,31 +251,7 @@ class EnemyShip(BaseShip):
         #else:
         #    pygame.draw.rect(screen, GREEN, [self.pos_x, self.pos_y, self.size_x, self.size_y])
 
-    def isShot(self, bullet):
-        rect = pygame.Rect(self.pos_x, self.pos_y, self.size_x, self.size_y)
-        if rect.colliderect(bullet.getRect()):
-            print ("HIT")
-            self.alive = False
-            bullet.reset()
-            return True
-    def reverse(self):
-        self.x_speed = self.x_speed * -1
-
-    # todo: are these bound guys ever called?
-    def outOfRightBound(self, bound):
-        if self.pos_x > bound.pos_x:
-            return True
-    def outOfLeftBound(self, bound):
-        if self.pos_x < bound.pos_x:
-            return True
-    def moveDown(self):
-        self.pos_y += self.size_y
-
-    # win condition for the enemy
-    def landedOnGround(self):
-        if self.pos_y > height - 95:
-            print("landed")
-            gameManager.shipLanded()
+    
 
 
 class Fleet:
@@ -403,6 +381,9 @@ class Fleet:
         for ship in self.shipList:
             ship.increaseSpeed()
 
+    def getBullets(self):
+        return self.bulletList
+
 
     def Update(self, bullet):
         if not self.gameManager.isDone():
@@ -445,8 +426,7 @@ class Fleet:
                 # if the ship is dead
                 ship.Update(bullet)
 
-    def getBullets(self):
-        return self.bulletList
+    
 
 class HeroShip(BaseShip):
     def __init__(self, gameManager):
@@ -469,6 +449,11 @@ class HeroShip(BaseShip):
     def halt(self):
         self.x_speed = 0
 
+    def die(self):
+        # if loseLife returns true, we are out of lives
+        if self.gameManager.loseLife():
+            self.alive = False
+
     def Update(self):
         if self.pos_x < 0:
             self.x_speed = 0
@@ -482,18 +467,6 @@ class HeroShip(BaseShip):
         if gameManager.isDone():
             self.alive = False
         
-
-
-    def die(self):
-        # if loseLife returns true, we are out of lives
-        if self.gameManager.loseLife():
-            self.alive = False
-
-
-
-
-
-
 
 class Bullet:
     def __init__(self, gameManager):
@@ -514,16 +487,6 @@ class Bullet:
     def isReady(self):
         if (self.ReadyToShoot):
             return True
-    def Update(self):
-        if self.gameManager.isDone():
-            self.speed = 0
-        if (self.Shooting):
-            self.pos_y += self.speed
-            Bullet = [self.pos_x, self.pos_y, self.size_x, self.size_y]
-            pygame.draw.rect(screen, WHITE, Bullet)
-        if self.pos_y < 0:
-            self.reset()
-
     def getPosX(self):
         return self.pos_x
     def getPosY(self):
@@ -537,6 +500,18 @@ class Bullet:
         self.pos_y = ship.getPosY()
         self.ReadyToShoot = False
         self.Shooting = True
+
+    def Update(self):
+        if self.gameManager.isDone():
+            self.speed = 0
+        if (self.Shooting):
+            self.pos_y += self.speed
+            Bullet = [self.pos_x, self.pos_y, self.size_x, self.size_y]
+            pygame.draw.rect(screen, WHITE, Bullet)
+        if self.pos_y < 0:
+            self.reset()
+
+    
 
 class EnemyBullet(Bullet):
     def __init__(self, gameManager):
